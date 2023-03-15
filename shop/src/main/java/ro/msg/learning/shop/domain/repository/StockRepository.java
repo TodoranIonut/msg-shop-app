@@ -6,4 +6,6 @@ import ro.msg.learning.shop.domain.entity.Stock;
 
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Integer> {
+
+    Stock findStockByProductId(Integer productId);
 }

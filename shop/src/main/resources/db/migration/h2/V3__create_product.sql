@@ -8,6 +8,6 @@ create table product (
     category_id integer,
     supplier_id integer,
     primary key (id),
-    foreign key (category_id) references product_category,
-    foreign key (supplier_id) references supplier
+    foreign key (category_id) references product_category(id),
+    foreign key (supplier_id) references supplier(id)
 )
