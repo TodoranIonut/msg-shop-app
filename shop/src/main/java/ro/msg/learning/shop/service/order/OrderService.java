@@ -6,5 +6,5 @@ import ro.msg.learning.shop.exception.ShopAppException;
 
 public interface OrderService {
 
-    Order handleOrder(CreateOrderDTO inputOrder) throws ShopAppException;
+    Order handleOrder(CreateOrderDTO orderInput) throws ShopAppException;
 }
