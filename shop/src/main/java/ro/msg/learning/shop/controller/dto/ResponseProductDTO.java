@@ -5,7 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class ResponseCreatedProductDTO {
+public class ResponseProductDTO {
 
     private Integer id;
     private String name;

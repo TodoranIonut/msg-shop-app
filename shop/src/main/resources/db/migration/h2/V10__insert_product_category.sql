@@ -4,4 +4,5 @@ insert into product_category (name, description) values
 ('tools','heavy and light tools'),
 ('home','furniture and decorations'),
 ('garden','garden tools'),
-('toys','toys and games for kids');
+('toys','toys and games for kids'),
+('grocery','food, fruits, vegetables');

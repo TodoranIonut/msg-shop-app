@@ -12,7 +12,7 @@ public class ProductDTO {
     private String description;
     private BigDecimal price;
     private Double weight;
-    private ProductCategoryDTO category;
-    private SupplierDTO supplier;
+    private Integer categoryId;
+    private Integer supplierId;
     private String imageUrl;
 }

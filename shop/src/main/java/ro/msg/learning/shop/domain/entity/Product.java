@@ -1,6 +1,5 @@
 package ro.msg.learning.shop.domain.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,11 +24,11 @@ public class Product {
     private BigDecimal price;
     private Double weight;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "category_id")
     private ProductCategory category;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 

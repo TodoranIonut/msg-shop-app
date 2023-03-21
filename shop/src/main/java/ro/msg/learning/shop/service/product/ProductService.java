@@ -10,7 +10,7 @@ public interface ProductService {
 
     List<Product> getAllProducts();
     Product getProductById(Integer productId) throws ShopAppException;
-    Product saveProduct(Product product);
+    Product saveProduct(Product product) throws ShopAppException;
     Product updateProduct(Integer productId, Product product) throws ShopAppException;
     void deleteProductById(Integer productId);
 }

@@ -6,4 +6,5 @@ insert into supplier (name) values
 ('dexter'),
 ('ambient'),
 ('noriel'),
-('apple');
+('apple'),
+('home garden');
