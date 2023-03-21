@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import ro.msg.learning.shop.domain.entity.ProductCategory;
 
 @Repository
-public interface ProductCategoryInterface extends JpaRepository<ProductCategory, Integer> {
+public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Integer> {
 }
