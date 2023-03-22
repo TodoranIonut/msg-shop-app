@@ -4,4 +4,6 @@ insert into stock (product_id, location_id, quantity) values
 (3,5,4),
 (4,2,43),
 (5,2,23),
-(6,2,3);
+(6,2,3),
+(2,4,12),
+(2,6,7);

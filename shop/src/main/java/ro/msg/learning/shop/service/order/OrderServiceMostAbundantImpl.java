@@ -20,17 +20,26 @@ import ro.msg.learning.shop.exception.ShopAppException;
 import ro.msg.learning.shop.exception.stock.OutOfStockException;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 @Transactional
+@Slf4j
 @AllArgsConstructor
-@ConditionalOnProperty(name="order.service.implementation.strategy",havingValue = "single-location")
-public class OrderServiceImpl implements OrderService {
+@ConditionalOnProperty(name="order.service.implementation.strategy",havingValue = "most-abundant")
+public class OrderServiceMostAbundantImpl implements OrderService{
+//Single Location - the method implemented in the previous chapter.
+//Most abundant - take each product from the location which has the largest stock for that particular product.
+//
+// The service then runs the strategy, obtaining a list of objects with the following
+//structure: location, product, quantity (= how many items of the given product are
+// taken from the given location). If the strategy is unable to find a suitable set of
+// locations, it should throw an exception.
 
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
@@ -48,8 +57,12 @@ public class OrderServiceImpl implements OrderService {
         //get stocks
         Set<Stock> stocks = productsMap.keySet()
                 .stream()
-                .map(stockRepository::findFirstStockByProductId)
-                .collect(Collectors.toSet());
+                .map( id -> {
+                            Optional<Stock> maxStock = stockRepository.findAllStockByProductId(id).stream()
+                                    .max(Comparator.comparing(Stock::getQuantity));
+                            return maxStock.orElse(null);
+                        }
+                ).collect(Collectors.toSet());
 
         //check stocks
         if(stocks.stream().anyMatch(stock -> stock.getQuantity() < productsMap.get(stock.getProduct().getId()))){
@@ -59,21 +72,21 @@ public class OrderServiceImpl implements OrderService {
         //set order details, new stock quantity and revenue sum
         Set<OrderDetail> newOrderDetailSet = new HashSet<>();
         stocks.forEach(stock -> {
-                    Integer orderedQuantity = productsMap.get(stock.getProduct().getId());
-                    Integer newQuantity = stock.getQuantity() - orderedQuantity;
-                    stock.setQuantity(newQuantity);
+            Integer orderedQuantity = productsMap.get(stock.getProduct().getId());
+            Integer newQuantity = stock.getQuantity() - orderedQuantity;
+            stock.setQuantity(newQuantity);
 
-                    BigDecimal actualSum = revenue.getSum();
-                    revenue.setSum(
-                            BigDecimal.valueOf(orderedQuantity)
+            BigDecimal actualSum = revenue.getSum();
+            revenue.setSum(
+                    BigDecimal.valueOf(orderedQuantity)
                             .multiply(stock.getProduct().getPrice())
                             .add(actualSum));
 
-                    OrderDetail orderDetail = new OrderDetail();
-                    orderDetail.setQuantity(orderedQuantity);
-                    orderDetail.setProduct(stock.getProduct());
-                    newOrderDetailSet.add(orderDetail);
-                });
+            OrderDetail orderDetail = new OrderDetail();
+            orderDetail.setQuantity(orderedQuantity);
+            orderDetail.setProduct(stock.getProduct());
+            newOrderDetailSet.add(orderDetail);
+        });
 
 
         //set order fields
@@ -88,10 +101,10 @@ public class OrderServiceImpl implements OrderService {
         //save order details
         Set<OrderDetail> saveOrderDetails = newOrderDetailSet.stream()
                 .map(orderDetail -> {
-                            orderDetail.setId(new OrderDetailKey(responseOrder.getId(), orderDetail.getProduct().getId()));
-                            orderDetail.setOrder(responseOrder);
-                            return orderDetail;
-                        }).collect(Collectors.toSet());
+                    orderDetail.setId(new OrderDetailKey(responseOrder.getId(), orderDetail.getProduct().getId()));
+                    orderDetail.setOrder(responseOrder);
+                    return orderDetail;
+                }).collect(Collectors.toSet());
 
         orderDetailRepository.saveAll(saveOrderDetails);
 
