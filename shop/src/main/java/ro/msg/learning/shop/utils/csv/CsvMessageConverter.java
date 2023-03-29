@@ -36,7 +36,8 @@ public class CsvMessageConverter<T> extends AbstractGenericHttpMessageConverter<
 
     @Override
     protected List<T> readInternal(@NonNull Class<? extends List<T>> clazz,@NonNull HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-        return new ArrayList<>();
+        Class<T> cls = (Class<T>) clazz.getClasses()[0];
+        return csvUtils.fromCsv(cls,inputMessage.getBody());
     }
 
     @Override

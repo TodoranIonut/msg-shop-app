@@ -33,13 +33,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @ConditionalOnProperty(name="order.service.implementation.strategy",havingValue = "most-abundant")
 public class OrderServiceMostAbundantImpl implements OrderService{
-//Single Location - the method implemented in the previous chapter.
-//Most abundant - take each product from the location which has the largest stock for that particular product.
-//
-// The service then runs the strategy, obtaining a list of objects with the following
-//structure: location, product, quantity (= how many items of the given product are
-// taken from the given location). If the strategy is unable to find a suitable set of
-// locations, it should throw an exception.
 
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
