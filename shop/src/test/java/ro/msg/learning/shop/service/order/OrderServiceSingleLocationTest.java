@@ -25,6 +25,7 @@ import ro.msg.learning.shop.exception.stock.OutOfStockException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -108,7 +109,7 @@ class OrderServiceSingleLocationTest {
         revenue.setSum(BigDecimal.valueOf(100.00));
 
         //when
-        when(stockRepository.findFirstStockByProductId(any())).thenReturn(stock);
+        when(stockRepository.findFirstStockByProductId(any())).thenReturn(Optional.of(stock));
         when(orderRepository.save(any())).thenReturn(order);
 
         CreateOrderDTO createOrderDTO = new CreateOrderDTO();
@@ -178,7 +179,7 @@ class OrderServiceSingleLocationTest {
         stock.setProduct(product);
 
         //when
-        when(stockRepository.findFirstStockByProductId(any())).thenReturn(stock);
+        when(stockRepository.findFirstStockByProductId(any())).thenReturn(Optional.of(stock));
 
         CreateOrderDTO createOrderDTO = new CreateOrderDTO();
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());

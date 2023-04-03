@@ -1,68 +1,108 @@
 package ro.msg.learning.shop.controller;
 
+import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-import ro.msg.learning.shop.controller.mappers.ProductMapper;
-import ro.msg.learning.shop.domain.entity.Product;
-import ro.msg.learning.shop.service.product.ProductService;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
+import ro.msg.learning.shop.domain.entity.Stock;
+import ro.msg.learning.shop.domain.repository.ProductRepository;
+import ro.msg.learning.shop.domain.repository.StockRepository;
 
-import java.util.List;
+import java.sql.Timestamp;
+import java.util.HashMap;
 
-import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-//@RunWith(SpringRunner.class)
-//@WebMvcTest(OrderController.class)
-@WebMvcTest(ProductController.class)
-//@ActiveProfiles("test")
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
+@AutoConfigureTestDatabase
+@ActiveProfiles("test")
 class OrderControllerTest {
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
-
     private MockMvc mockMvc;
 
-//    @Mock
-//    private OrderService orderService;
+    @Autowired
+    private ProductRepository productRepository;
 
-    @MockBean
-    private ProductService productService;
+    @Autowired
+    private StockRepository stockRepository;
 
-    private ProductMapper productMapper;
+    private ObjectMapper objectMapper = new ObjectMapper();
+
 
     @BeforeEach
-    void setUp() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
-
-    @AfterEach
-    void tearDown() {
+    public void resetDataBase(@Autowired Flyway flyway) {
+        flyway.clean();
+        flyway.migrate();
     }
 
     @SneakyThrows
     @Test
-    void createOrder() {
+    void createOrderTest(){
+        CreateOrderDTO createOrderDTO = new CreateOrderDTO();
+        createOrderDTO.setTimestamp(new Timestamp(System.currentTimeMillis()));
+        createOrderDTO.setCountryAddress("country test");
+        createOrderDTO.setCityAddress("city test");
+        createOrderDTO.setProvinceAddress("province test");
+        createOrderDTO.setStreetAddress("address test");
+        Integer productId = 1;
+        createOrderDTO.setProducts(new HashMap<>() {{
+            put(productId, 1);
+        }});
 
-//        CreateOrderDTO createOrderDTO = new CreateOrderDTO();
-//        underTest.createOrder(createOrderDTO);
+        Stock stock = stockRepository.findFirstStockByProductId(productId).orElse(null);
+        String requestBody = objectMapper.writeValueAsString(createOrderDTO);
+        mockMvc.perform(post("/api/v1/order/create")
+                        .content(requestBody)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.countryAddress").value(createOrderDTO.getCountryAddress()))
+                .andExpect(jsonPath("$.cityAddress").value(createOrderDTO.getCityAddress()))
+                .andExpect(jsonPath("$.provinceAddress").value(createOrderDTO.getProvinceAddress()))
+                .andExpect(jsonPath("$.streetAddress").value(createOrderDTO.getStreetAddress()))
+                .andExpect(jsonPath("$.shippedFrom.countryAddress").value(stock.getLocation().getCountryAddress()))
+                .andExpect(jsonPath("$.shippedFrom.cityAddress").value(stock.getLocation().getCityAddress()))
+                .andExpect(jsonPath("$.shippedFrom.provinceAddress").value(stock.getLocation().getProvinceAddress()))
+                .andExpect(jsonPath("$.shippedFrom.streetAddress").value(stock.getLocation().getStreetAddress()));
+    }
 
-        Product product = new Product();
-        product.setId(2);
-        List<Product> productList = List.of(product);
-        given(productService.getAllProducts()).willReturn(productList);
+    @SneakyThrows
+    @Test
+    void createOrderWithMissingStock() {
+        CreateOrderDTO createOrderDTO = new CreateOrderDTO();
+        createOrderDTO.setTimestamp(new Timestamp(System.currentTimeMillis()));
+        createOrderDTO.setCountryAddress("country test");
+        createOrderDTO.setCityAddress("city test");
+        createOrderDTO.setProvinceAddress("province test");
+        createOrderDTO.setStreetAddress("address test");
 
-        mockMvc.perform(get("/api/v1/product/all")
-                .contentType(APPLICATION_JSON))
-                .andExpect(status().isOk());
+        Integer productId = 1;
+        Stock stock = stockRepository.findFirstStockByProductId(productId).orElse(null);
+        Integer moreThenAvailableQuantity = stock.getQuantity() + 1;
+
+        createOrderDTO.setProducts(new HashMap<>() {{
+            put(productId, moreThenAvailableQuantity);
+        }});
+
+        String requestBody = objectMapper.writeValueAsString(createOrderDTO);
+        mockMvc.perform(post("/api/v1/order/create")
+                        .content(requestBody)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("order demand is to high for actual stock"));
     }
 }

@@ -17,13 +17,13 @@ import ro.msg.learning.shop.domain.repository.OrderRepository;
 import ro.msg.learning.shop.domain.repository.RevenueRepository;
 import ro.msg.learning.shop.domain.repository.StockRepository;
 import ro.msg.learning.shop.exception.ShopAppException;
+import ro.msg.learning.shop.exception.product.ProductNotFoundException;
 import ro.msg.learning.shop.exception.stock.OutOfStockException;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 @AllArgsConstructor
-@ConditionalOnProperty(name="order.service.implementation.strategy",havingValue = "most-abundant")
-public class OrderServiceMostAbundantImpl implements OrderService{
+@ConditionalOnProperty(name = "order.service.implementation.strategy", havingValue = "most-abundant")
+public class OrderServiceMostAbundantImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
@@ -47,18 +47,22 @@ public class OrderServiceMostAbundantImpl implements OrderService{
         Revenue revenue = new Revenue();
         revenue.setSum(BigDecimal.ZERO);
 
+        //check all product ids
+        for (Integer id : productsMap.keySet()) {
+            if (!stockRepository.existsStockByProductId(id))
+                throw new ProductNotFoundException(id);
+        }
+
         //get stocks
         Set<Stock> stocks = productsMap.keySet()
                 .stream()
-                .map( id -> {
-                            Optional<Stock> maxStock = stockRepository.findAllStockByProductId(id).stream()
-                                    .max(Comparator.comparing(Stock::getQuantity));
-                            return maxStock.orElse(null);
-                        }
-                ).collect(Collectors.toSet());
+                .map(id -> stockRepository.findAllStockByProductId(id).stream()
+                                .max(Comparator.comparing(Stock::getQuantity))
+                                .orElse(null))
+                .collect(Collectors.toSet());
 
         //check stocks
-        if(stocks.stream().anyMatch(stock -> stock.getQuantity() < productsMap.get(stock.getProduct().getId()))){
+        if (stocks.stream().anyMatch(stock -> stock.getQuantity() < productsMap.get(stock.getProduct().getId()))) {
             throw new OutOfStockException();
         }
 
