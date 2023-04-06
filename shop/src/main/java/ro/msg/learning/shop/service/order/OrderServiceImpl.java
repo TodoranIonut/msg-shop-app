@@ -21,7 +21,6 @@ import ro.msg.learning.shop.exception.product.ProductNotFoundException;
 import ro.msg.learning.shop.exception.stock.OutOfStockException;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -56,9 +55,7 @@ public class OrderServiceImpl implements OrderService {
         //get stocks
         Set<Stock> stocks = productsMap.keySet()
                 .stream()
-                .map(id -> stockRepository.findAllStockByProductId(id).stream()
-                        .max(Comparator.comparing(Stock::getQuantity))
-                        .orElse(null))
+                .map(id -> stockRepository.findFirstStockByProductId(id).orElse(null))
                 .collect(Collectors.toSet());
 
         //check stocks

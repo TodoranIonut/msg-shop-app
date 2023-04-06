@@ -1,20 +1,19 @@
 package ro.msg.learning.shop.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
 import ro.msg.learning.shop.domain.entity.Stock;
-import ro.msg.learning.shop.domain.repository.ProductRepository;
 import ro.msg.learning.shop.domain.repository.StockRepository;
 
 import java.sql.Timestamp;
@@ -28,21 +27,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@AutoConfigureTestDatabase
 @ActiveProfiles("test")
-class OrderControllerTest {
+@TestPropertySource(
+        locations = "/application-test.properties",
+        properties = {"order.service.implementation.strategy=most-abundant"}
+)
+class OrderControllerMostAbundantTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
     private StockRepository stockRepository;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     public void resetDataBase(@Autowired Flyway flyway) {

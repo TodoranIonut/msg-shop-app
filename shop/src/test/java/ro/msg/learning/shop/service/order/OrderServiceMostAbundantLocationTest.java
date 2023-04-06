@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.TestPropertySource;
 import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
 import ro.msg.learning.shop.domain.entity.Location;
 import ro.msg.learning.shop.domain.entity.Order;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@TestPropertySource(locations = "/application-test.properties")
 class OrderServiceMostAbundantLocationTest {
 
     @Mock
@@ -126,6 +128,7 @@ class OrderServiceMostAbundantLocationTest {
         revenue.setSum(BigDecimal.valueOf(100.00));
 
         //when
+        when(stockRepository.existsStockByProductId(any())).thenReturn(true);
         when(stockRepository.findAllStockByProductId(any())).thenReturn(stockList);
         when(orderRepository.save(any())).thenReturn(order);
 
@@ -199,6 +202,7 @@ class OrderServiceMostAbundantLocationTest {
 
         //when
         when(stockRepository.findAllStockByProductId(any())).thenReturn(stockList);
+        when(stockRepository.existsStockByProductId(any())).thenReturn(true);
 
         CreateOrderDTO createOrderDTO = new CreateOrderDTO();
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
