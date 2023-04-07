@@ -1,6 +1,7 @@
 package ro.msg.learning.shop.controller;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +17,7 @@ import java.net.URI;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/v1/order")
+@RequestMapping(value = "/api/v1/order" ,produces = MediaType.APPLICATION_JSON_VALUE)
 public class OrderController {
 
     private final OrderService orderService;

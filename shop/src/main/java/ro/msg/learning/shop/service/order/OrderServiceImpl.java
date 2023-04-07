@@ -17,6 +17,7 @@ import ro.msg.learning.shop.domain.repository.OrderRepository;
 import ro.msg.learning.shop.domain.repository.RevenueRepository;
 import ro.msg.learning.shop.domain.repository.StockRepository;
 import ro.msg.learning.shop.exception.ShopAppException;
+import ro.msg.learning.shop.exception.product.ProductNotFoundException;
 import ro.msg.learning.shop.exception.stock.OutOfStockException;
 
 import java.math.BigDecimal;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional
 @AllArgsConstructor
-@ConditionalOnProperty(name="order.service.implementation.strategy",havingValue = "single-location")
+@ConditionalOnProperty(name = "order.service.implementation.strategy", havingValue = "single-location")
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -45,35 +46,41 @@ public class OrderServiceImpl implements OrderService {
         Revenue revenue = new Revenue();
         revenue.setSum(BigDecimal.ZERO);
 
+        //check all product ids
+        for (Integer id : productsMap.keySet()) {
+            if (!stockRepository.existsStockByProductId(id))
+                throw new ProductNotFoundException(id);
+        }
+
         //get stocks
         Set<Stock> stocks = productsMap.keySet()
                 .stream()
-                .map(stockRepository::findFirstStockByProductId)
+                .map(id -> stockRepository.findFirstStockByProductId(id).orElse(null))
                 .collect(Collectors.toSet());
 
         //check stocks
-        if(stocks.stream().anyMatch(stock -> stock.getQuantity() < productsMap.get(stock.getProduct().getId()))){
+        if (stocks.stream().anyMatch(stock -> stock.getQuantity() < productsMap.get(stock.getProduct().getId()))) {
             throw new OutOfStockException();
         }
 
         //set order details, new stock quantity and revenue sum
         Set<OrderDetail> newOrderDetailSet = new HashSet<>();
         stocks.forEach(stock -> {
-                    Integer orderedQuantity = productsMap.get(stock.getProduct().getId());
-                    Integer newQuantity = stock.getQuantity() - orderedQuantity;
-                    stock.setQuantity(newQuantity);
+            Integer orderedQuantity = productsMap.get(stock.getProduct().getId());
+            Integer newQuantity = stock.getQuantity() - orderedQuantity;
+            stock.setQuantity(newQuantity);
 
-                    BigDecimal actualSum = revenue.getSum();
-                    revenue.setSum(
-                            BigDecimal.valueOf(orderedQuantity)
+            BigDecimal actualSum = revenue.getSum();
+            revenue.setSum(
+                    BigDecimal.valueOf(orderedQuantity)
                             .multiply(stock.getProduct().getPrice())
                             .add(actualSum));
 
-                    OrderDetail orderDetail = new OrderDetail();
-                    orderDetail.setQuantity(orderedQuantity);
-                    orderDetail.setProduct(stock.getProduct());
-                    newOrderDetailSet.add(orderDetail);
-                });
+            OrderDetail orderDetail = new OrderDetail();
+            orderDetail.setQuantity(orderedQuantity);
+            orderDetail.setProduct(stock.getProduct());
+            newOrderDetailSet.add(orderDetail);
+        });
 
 
         //set order fields
@@ -88,10 +95,10 @@ public class OrderServiceImpl implements OrderService {
         //save order details
         Set<OrderDetail> saveOrderDetails = newOrderDetailSet.stream()
                 .map(orderDetail -> {
-                            orderDetail.setId(new OrderDetailKey(responseOrder.getId(), orderDetail.getProduct().getId()));
-                            orderDetail.setOrder(responseOrder);
-                            return orderDetail;
-                        }).collect(Collectors.toSet());
+                    orderDetail.setId(new OrderDetailKey(responseOrder.getId(), orderDetail.getProduct().getId()));
+                    orderDetail.setOrder(responseOrder);
+                    return orderDetail;
+                }).collect(Collectors.toSet());
 
         orderDetailRepository.saveAll(saveOrderDetails);
 
