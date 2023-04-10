@@ -1,5 +1,6 @@
 package ro.msg.learning.shop.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
@@ -63,14 +64,15 @@ class OrderControllerSingleLocationTest {
         authenticationRequestDTO.setUsername("rogers");
         authenticationRequestDTO.setPassword("123");
         String requestBody = objectMapper.writeValueAsString(authenticationRequestDTO);
-        String tokenString = getAuthToken();
 
         MvcResult resultToken = mockMvc.perform(post("/api/v1/auth")
                 .content(requestBody)
-                .header("authorization", tokenString)
                 .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk()).andReturn();
-        return resultToken.getResponse().getContentAsString();
+
+        String responseContent = resultToken.getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(responseContent).get("token");
+        return "Bearer " + jsonNode.textValue();
     }
 
     @SneakyThrows
@@ -123,9 +125,11 @@ class OrderControllerSingleLocationTest {
             put(productId, moreThenAvailableQuantity);
         }});
 
+        String tokenString = getAuthToken();
         String requestBody = objectMapper.writeValueAsString(createOrderDTO);
         mockMvc.perform(post("/api/v1/order/create")
                         .content(requestBody)
+                        .header("authorization", tokenString)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("order demand is to high for actual stock"));

@@ -1,5 +1,6 @@
 package ro.msg.learning.shop.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
@@ -64,7 +65,10 @@ class OrderControllerMostAbundantTest {
                 .content(requestBody)
                 .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk()).andReturn();
-        return resultToken.getResponse().getContentAsString();
+
+        String responseContent = resultToken.getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(responseContent).get("token");
+        return "Bearer " + jsonNode.textValue();
     }
 
     @SneakyThrows
