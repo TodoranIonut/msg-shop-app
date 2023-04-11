@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ro.msg.learning.shop.domain.entity.DailyRevenue;
+import ro.msg.learning.shop.exception.ShopAppException;
+import ro.msg.learning.shop.exception.date.IllegalDateFormatExceptions;
+import ro.msg.learning.shop.exception.date.IllegalDateStringExceptions;
 import ro.msg.learning.shop.service.revenue.RevenueService;
 
 import java.text.ParseException;
@@ -21,10 +24,19 @@ public class RevenueController {
 
     private final RevenueService revenueService;
 
-    @GetMapping("/daily")
-    public ResponseEntity<List<DailyRevenue>> getRevenueForToday(@RequestParam String dateFormat, @RequestParam String date) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat);
-        Date formatedDate = simpleDateFormat.parse(date);
+    @GetMapping("/date")
+    public ResponseEntity<List<DailyRevenue>> getRevenueByDate(@RequestParam String dateFormat, @RequestParam String date) throws ShopAppException {
+        SimpleDateFormat simpleDateFormat = null;
+        Date formatedDate = null;
+        try{
+            simpleDateFormat = new SimpleDateFormat(dateFormat);
+            formatedDate = simpleDateFormat.parse(date);
+        } catch (IllegalArgumentException | ParseException e){
+            if ( e instanceof IllegalArgumentException)
+                throw new IllegalDateFormatExceptions();
+            else
+                throw new IllegalDateStringExceptions();
+        }
         List<DailyRevenue> dailyRevenues = revenueService.getDailyRevenueByDate(formatedDate);
         return ResponseEntity.ok().body(dailyRevenues);
     }
