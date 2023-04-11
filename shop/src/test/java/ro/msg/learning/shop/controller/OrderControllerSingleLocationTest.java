@@ -1,5 +1,6 @@
 package ro.msg.learning.shop.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import ro.msg.learning.shop.controller.dto.AuthenticationRequestDTO;
 import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
 import ro.msg.learning.shop.domain.entity.Stock;
 import ro.msg.learning.shop.domain.repository.ProductRepository;
@@ -31,7 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestPropertySource(
         locations = "/application-test.properties",
-        properties = {"order.service.implementation.strategy=single-location"}
+        properties = {
+                "order.service.implementation.strategy=single-location",
+                "security.login.application=with-jwt"
+        }
 )
 class OrderControllerSingleLocationTest {
 
@@ -53,8 +59,25 @@ class OrderControllerSingleLocationTest {
     }
 
     @SneakyThrows
+    private String getAuthToken() {
+        AuthenticationRequestDTO authenticationRequestDTO = new AuthenticationRequestDTO();
+        authenticationRequestDTO.setUsername("rogers");
+        authenticationRequestDTO.setPassword("123");
+        String requestBody = objectMapper.writeValueAsString(authenticationRequestDTO);
+
+        MvcResult resultToken = mockMvc.perform(post("/api/v1/auth")
+                .content(requestBody)
+                .contentType(APPLICATION_JSON)
+        ).andExpect(status().isOk()).andReturn();
+
+        String responseContent = resultToken.getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(responseContent).get("token");
+        return "Bearer " + jsonNode.textValue();
+    }
+
+    @SneakyThrows
     @Test
-    void createOrderTest(){
+    void createOrderTest() {
         CreateOrderDTO createOrderDTO = new CreateOrderDTO();
         createOrderDTO.setTimestamp(new Timestamp(System.currentTimeMillis()));
         createOrderDTO.setCountryAddress("country test");
@@ -66,10 +89,12 @@ class OrderControllerSingleLocationTest {
             put(productId, 1);
         }});
 
+        String tokenString = getAuthToken();
         Stock stock = stockRepository.findFirstStockByProductId(productId).orElse(null);
         String requestBody = objectMapper.writeValueAsString(createOrderDTO);
         mockMvc.perform(post("/api/v1/order/create")
                         .content(requestBody)
+                        .header("authorization", tokenString)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.countryAddress").value(createOrderDTO.getCountryAddress()))
@@ -100,9 +125,11 @@ class OrderControllerSingleLocationTest {
             put(productId, moreThenAvailableQuantity);
         }});
 
+        String tokenString = getAuthToken();
         String requestBody = objectMapper.writeValueAsString(createOrderDTO);
         mockMvc.perform(post("/api/v1/order/create")
                         .content(requestBody)
+                        .header("authorization", tokenString)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("order demand is to high for actual stock"));
