@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,6 +27,11 @@ public class MapQuestService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Value("${mapquestapi.routematrix.url}")
+    private String resourceUrl;
+
+    @Value("${mapquestapi.routematrix.key}")
+    private String mapQuestKey;
 
 
     @AllArgsConstructor
@@ -38,8 +44,7 @@ public class MapQuestService {
 
     public ResponseEntity<String> getMapQuestRouteResponse(String[] locations) throws JsonProcessingException {
         //build request url with MapQuest key
-        String resourceUrl = "https://www.mapquestapi.com/directions/v2/routematrix";
-        String mapQuestKey = "My3otDNiw3oOKwPY0Ut7Zh2a1jjs1Ytt";
+
         String requestUrl = resourceUrl + "?key=" + mapQuestKey;
 
         //build request object
