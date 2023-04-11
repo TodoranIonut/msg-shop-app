@@ -7,7 +7,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.TestPropertySource;
 import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
 import ro.msg.learning.shop.domain.entity.Location;
 import ro.msg.learning.shop.domain.entity.Order;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@TestPropertySource(locations = "/application-test.properties")
 class OrderServiceSingleLocationTest {
 
     @Mock
