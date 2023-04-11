@@ -39,7 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final RevenueRepository revenueRepository;
 
     @Override
-    public Order handleOrder(CreateOrderDTO orderInput) throws ShopAppException {
+    public Set<Order> handleOrder(CreateOrderDTO orderInput) throws ShopAppException {
 
         Map<Integer, Integer> productsMap = orderInput.getProducts();
         Order order = new Order();
@@ -112,6 +112,6 @@ public class OrderServiceImpl implements OrderService {
         revenue.setLocation(location);
         revenueRepository.save(revenue);
 
-        return responseOrder;
+        return Set.of(responseOrder);
     }
 }

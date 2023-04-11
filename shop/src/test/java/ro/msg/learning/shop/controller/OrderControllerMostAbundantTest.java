@@ -64,18 +64,19 @@ class OrderControllerMostAbundantTest {
 
         Stock stock = stockRepository.findFirstStockByProductId(productId).orElse(null);
         String requestBody = objectMapper.writeValueAsString(createOrderDTO);
+
         mockMvc.perform(post("/api/v1/order/create")
                         .content(requestBody)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.countryAddress").value(createOrderDTO.getCountryAddress()))
-                .andExpect(jsonPath("$.cityAddress").value(createOrderDTO.getCityAddress()))
-                .andExpect(jsonPath("$.provinceAddress").value(createOrderDTO.getProvinceAddress()))
-                .andExpect(jsonPath("$.streetAddress").value(createOrderDTO.getStreetAddress()))
-                .andExpect(jsonPath("$.shippedFrom.countryAddress").value(stock.getLocation().getCountryAddress()))
-                .andExpect(jsonPath("$.shippedFrom.cityAddress").value(stock.getLocation().getCityAddress()))
-                .andExpect(jsonPath("$.shippedFrom.provinceAddress").value(stock.getLocation().getProvinceAddress()))
-                .andExpect(jsonPath("$.shippedFrom.streetAddress").value(stock.getLocation().getStreetAddress()));
+                .andExpect(jsonPath("$[0].countryAddress").value(createOrderDTO.getCountryAddress()))
+                .andExpect(jsonPath("$[0].cityAddress").value(createOrderDTO.getCityAddress()))
+                .andExpect(jsonPath("$[0].provinceAddress").value(createOrderDTO.getProvinceAddress()))
+                .andExpect(jsonPath("$[0].streetAddress").value(createOrderDTO.getStreetAddress()))
+                .andExpect(jsonPath("$[0].shippedFrom.countryAddress").value(stock.getLocation().getCountryAddress()))
+                .andExpect(jsonPath("$[0].shippedFrom.cityAddress").value(stock.getLocation().getCityAddress()))
+                .andExpect(jsonPath("$[0].shippedFrom.provinceAddress").value(stock.getLocation().getProvinceAddress()))
+                .andExpect(jsonPath("$[0].shippedFrom.streetAddress").value(stock.getLocation().getStreetAddress()));
     }
 
     @SneakyThrows

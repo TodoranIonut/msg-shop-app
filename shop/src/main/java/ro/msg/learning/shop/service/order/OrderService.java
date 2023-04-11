@@ -4,7 +4,9 @@ import ro.msg.learning.shop.controller.dto.CreateOrderDTO;
 import ro.msg.learning.shop.domain.entity.Order;
 import ro.msg.learning.shop.exception.ShopAppException;
 
+import java.util.Set;
+
 public interface OrderService {
 
-    Order handleOrder(CreateOrderDTO orderInput) throws ShopAppException;
+    Set<Order> handleOrder(CreateOrderDTO orderInput) throws ShopAppException;
 }

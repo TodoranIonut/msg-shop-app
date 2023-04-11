@@ -14,6 +14,7 @@ import ro.msg.learning.shop.exception.ShopAppException;
 import ro.msg.learning.shop.service.order.OrderService;
 
 import java.net.URI;
+import java.util.Set;
 
 @AllArgsConstructor
 @RestController
@@ -23,10 +24,9 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/create")
-    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderDTO orderInput) throws ShopAppException {
+    public ResponseEntity<Set<Order>> createOrder(@RequestBody CreateOrderDTO orderInput) throws ShopAppException {
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/v1/order/create").toUriString());
-        Order order = orderService.handleOrder(orderInput);
+        Set<Order> order = orderService.handleOrder(orderInput);
         return ResponseEntity.created(uri).body(order);
     }
-
 }
