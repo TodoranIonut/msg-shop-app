@@ -1,6 +1,7 @@
 package ro.msg.learning.shop.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/product")
+@RequestMapping(value = "/api/v1/product",produces =MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class ProductController {
 
